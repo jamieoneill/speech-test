@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.23.0/dist/phaser.js"></script>
+    <script src="artyom.js"></script>
+  </head>
+  <body>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width">
+
+    <title>Speech Detection</title>
+
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+  </head>
+
+  <body>
+    <h1>Speech Detection</h1>
+    <button id="startRecording">start</button>
+    <button id="stopRecording">stop</button>
+    <button id="btn">btn</button>
+
+
+    <p class="hints"></p>
+    <div>
+        <div id="output">
+          <p>Transcript : </p>
+    </div>
+    <script>
+
+      $(function () {
+
+        const artyom = new Artyom();
+
+      // Start the commands !
+      artyom.initialize({
+          lang: "en-GB", // GreatBritain english
+          continuous: true, // Listen forever
+          soundex: true,// Use the soundex algorithm to increase accuracy
+          debug: true, // Show messages in the console
+          executionKeyword: "and do it now",
+          listen: true, // Start to listen commands !
+
+          // If providen, you can only trigger a command if you say its name
+          // e.g to trigger Good Morning, you need to say "Jarvis Good Morning"
+          name: "Jarvis" 
+      }).then(() => {
+          console.log("Artyom has been succesfully initialized");
+      }).catch((err) => {
+          console.error("Artyom couldn't be initialized: ", err);
+      });
+
+      $("#btn").on("click", function(){
+        artyom.say("Hello World !");
+      });
+
+      var SpeechRecognition = SpeechRecognition || webkitSpeechRecognition;
+      var SpeechGrammarList = SpeechGrammarList || webkitSpeechGrammarList;
+      var SpeechRecognitionEvent = SpeechRecognitionEvent || webkitSpeechRecognitionEvent
+
+      var recognition = new SpeechRecognition();
+      recognition.continuous = true;
+      recognition.lang = "en-US";
+      recognition.interimResults = false;
+      recognition.maxAlternatives = 1;
+
+      //if i want to add custom words to grammar
+      
+      var addedWords = [ 'umm', 'err' , 'eh', 'ah' , 'em', 'so', 'uh']
+      var grammar = '#JSGF V1.0; grammar addedWords; public <addedWords> = ' + addedWords.join(' | ') + ' ;'
+      var speechRecognitionList = new SpeechGrammarList();
+      speechRecognitionList.addFromString(grammar, 1);
+      recognition.grammars = speechRecognitionList;
+      
+      console.log(recognition);
+      console.log(speechRecognitionList[0].src);
+
+
+      $("#startRecording").on("click", function () {
+        recognition.start();
+        console.log("Ready to receive words.");
+      });
+
+      $("#stopRecording").on("click", function () {
+        recognition.stop();
+        console.log("Recording stopped");
+      });
+
+      recognition.onresult = function (event) {
+        //get the spoken words
+        console.log(event)
+        var text = event.results[event.results.length - 1][0].transcript;
+        $("#output").append( "<p>" +text + "</p>");
+        console.log("Detected: " + text);
+        console.log("Confidence: " + event.results[0][0].confidence);
+      };
+
+      /*
+      recognition.onspeechend = function () {
+        recognition.stop();
+      };
+      */
+
+      recognition.onnomatch = function (event) {
+        //diagnostic.textContent = "I didn't recognize that word.";
+        console.log("I didn't recognize that word.")
+        console.log(event)
+
+      };
+
+      recognition.onerror = function (event) {
+        console.log ("Error occurred in recognition: " + event.error);
+      };
+      });
+    </script>
+  </body>
+</html>
